@@ -47,6 +47,7 @@ def create_hda(subnet,hda_name):
     tmp = subnet.createDigitalAsset(name=hda_name,description=hda_name)
     parent = tmp.parent()
     tmp.destroy()
+
     hda_instance = parent.createNode(hda_name,hda_name)
     source_tuple = hda_instance.parmTuple('./xform/r')
     definition = hda_instance.type().definition()
@@ -116,10 +117,12 @@ def create_cam():
     
 def run():
     hou.hipFile.clear(suppress_save_prompt=False)
+    hou.setUpdateMode(hou.updateMode.Manual)
     box_subnet = create_box_subnet()
     demo_box = create_hda(box_subnet,'demo_box')
     add_shading_component(demo_box)
     create_cam()
     hou.node('/obj').layoutChildren()
+    hou.setUpdateMode(hou.updateMode.AutoUpdate)
     
     hou.playbar.setRealTime(True)
