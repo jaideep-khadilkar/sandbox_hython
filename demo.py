@@ -1,11 +1,12 @@
 '''
 Created on 24-Aug-2018
 
-@author: user
+@author: Jaideep Khadilkar
 '''
 import sys
 sys.path.append('/opt/houdini/houdini/python2.7libs')
 import hou
+import time
 
 def create_box_subnet():
     obj = hou.node('/obj')
@@ -47,9 +48,22 @@ def create_hda(subnet,hda_name):
     tmp.destroy()
     return parent.createNode(hda_name,hda_name)
     
+def create_cam():
+    obj = hou.node('/obj')
+    cam = obj.createNode('cam','camera')
+    cur_desktop = hou.ui.curDesktop()
+    scene_viewer = cur_desktop.paneTabOfType(hou.paneTabType.SceneViewer)
+    persp = scene_viewer.findViewport('persp1')
+    persp.home()
+    persp.saveViewToCamera(cam)
+    time.sleep(0.1)
+    persp.setCamera(cam)
+    
 def run():
     hou.hipFile.clear(suppress_save_prompt=False)
     box_subnet = create_box_subnet()
     demo_box = create_hda(box_subnet,'demo_box')
+    create_cam()
+    hou.node('/obj').layoutChildren()
     
     hou.playbar.setRealTime(True)
