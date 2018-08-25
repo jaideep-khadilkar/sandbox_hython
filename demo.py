@@ -7,14 +7,14 @@ import sys
 sys.path.append('/opt/houdini/houdini/python2.7libs')
 import hou
 
-def create_box():
+def create_box_subnet():
     obj = hou.node('/obj')
     box_geo = obj.createNode('geo','box_geo',run_init_scripts=False)
     
-    box1 = box_geo.createNode('box','box')
+    box1 = box_geo.createNode('box','box1')
     box1.parm('scale').set(0.8)
     
-    box2 = box_geo.createNode('box','box')
+    box2 = box_geo.createNode('box','box2')
     box2.parmTuple('size').set((0.5,0.5,0.5))
     
     copy = box_geo.createNode('copytopoints','copy')
@@ -36,10 +36,20 @@ def create_box():
     out.setDisplayFlag(True)
     out.setRenderFlag(True)
     
-    box_geo.layoutChildren()
+    box_subnet = box_geo.collapseIntoSubnet((box1,box2,copy,xform,out)
+                                            ,subnet_name='box_subnet')
+    box_subnet.layoutChildren()
+    return box_subnet
     
-
+def create_hda(subnet,hda_name):
+    tmp = subnet.createDigitalAsset(name=hda_name)
+    parent = tmp.parent()
+    tmp.destroy()
+    return parent.createNode(hda_name,hda_name)
+    
 def run():
     hou.hipFile.clear(suppress_save_prompt=False)
-    create_box()
+    box_subnet = create_box_subnet()
+    demo_box = create_hda(box_subnet,'demo_box')
+    
     hou.playbar.setRealTime(True)
