@@ -34,12 +34,6 @@ vol.setAllVoxels([10]*1000000)
     python.setInput(0,copy)
     
     xform = box_geo.createNode('xform','xform')
-    xform_r = xform.parmTuple('r')
-    keyframe = hou.Keyframe()
-    keyframe.setExpression('$FF',hou.exprLanguage.Hscript)
-    xform_r[0].setKeyframe(keyframe)
-    xform_r[1].setKeyframe(keyframe)
-    xform_r[2].setKeyframe(keyframe)    
     xform.setInput(0,python)
     xform.setDisplayFlag(True)
     xform.setRenderFlag(True)
@@ -50,10 +44,25 @@ vol.setAllVoxels([10]*1000000)
     return box_subnet
     
 def create_hda(subnet,hda_name):
-    tmp = subnet.createDigitalAsset(name=hda_name)
+    tmp = subnet.createDigitalAsset(name=hda_name,description=hda_name)
     parent = tmp.parent()
     tmp.destroy()
-    return parent.createNode(hda_name,hda_name)
+    hda_instance = parent.createNode(hda_name,hda_name)
+    source_tuple = hda_instance.parmTuple('./xform/r')
+    definition = hda_instance.type().definition()
+    definition.addParmTuple(source_tuple.parmTemplate())
+    target_tuple = hda_instance.parmTuple('r')
+
+    hda_instance.allowEditingOfContents()
+    source_tuple.set(target_tuple)
+    keyframe = hou.Keyframe()
+    keyframe.setExpression('$FF',hou.exprLanguage.Hscript)
+    target_tuple[0].setKeyframe(keyframe)
+    target_tuple[1].setKeyframe(keyframe)
+    target_tuple[2].setKeyframe(keyframe)
+    definition.updateFromNode(hda_instance)
+    hda_instance.matchCurrentDefinition()
+    return hda_instance
 
 def add_shading_component(subnet):
     subnet.allowEditingOfContents()
