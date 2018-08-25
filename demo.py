@@ -23,6 +23,16 @@ def create_box_subnet():
     copy.setInput(0,box2)
     copy.setInput(1,box1)
     
+    python_code = """
+node = hou.pwd()
+geo = node.geometry()
+vol = geo.createVolume(100,100,100,geo.boundingBox())
+vol.setAllVoxels([1]*1000000)
+    """
+    python = box_geo.createNode('python','python')
+    python.parm('python').set(python_code)
+    python.setInput(0,copy)
+    
     xform = box_geo.createNode('xform','xform')
     xform_r = xform.parmTuple('r')
     keyframe = hou.Keyframe()
@@ -30,14 +40,14 @@ def create_box_subnet():
     xform_r[0].setKeyframe(keyframe)
     xform_r[1].setKeyframe(keyframe)
     xform_r[2].setKeyframe(keyframe)    
-    xform.setInput(0,copy)
+    xform.setInput(0,python)
     
     out = box_geo.createNode('null','OUT')
     out.setInput(0,xform)
     out.setDisplayFlag(True)
     out.setRenderFlag(True)
     
-    box_subnet = box_geo.collapseIntoSubnet((box1,box2,copy,xform,out)
+    box_subnet = box_geo.collapseIntoSubnet((box1,box2,copy,python,xform,out)
                                             ,subnet_name='box_subnet')
     box_subnet.layoutChildren()
     return box_subnet
