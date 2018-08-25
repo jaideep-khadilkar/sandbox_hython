@@ -27,7 +27,7 @@ def create_box_subnet():
 node = hou.pwd()
 geo = node.geometry()
 vol = geo.createVolume(100,100,100,geo.boundingBox())
-vol.setAllVoxels([1]*1000000)
+vol.setAllVoxels([10]*1000000)
     """
     python = box_geo.createNode('python','python')
     python.parm('python').set(python_code)
@@ -41,13 +41,10 @@ vol.setAllVoxels([1]*1000000)
     xform_r[1].setKeyframe(keyframe)
     xform_r[2].setKeyframe(keyframe)    
     xform.setInput(0,python)
-    
-    out = box_geo.createNode('null','OUT')
-    out.setInput(0,xform)
-    out.setDisplayFlag(True)
-    out.setRenderFlag(True)
-    
-    box_subnet = box_geo.collapseIntoSubnet((box1,box2,copy,python,xform,out)
+    xform.setDisplayFlag(True)
+    xform.setRenderFlag(True)
+
+    box_subnet = box_geo.collapseIntoSubnet((box1,box2,copy,python,xform)
                                             ,subnet_name='box_subnet')
     box_subnet.layoutChildren()
     return box_subnet
@@ -57,6 +54,45 @@ def create_hda(subnet,hda_name):
     parent = tmp.parent()
     tmp.destroy()
     return parent.createNode(hda_name,hda_name)
+
+def add_shading_component(subnet):
+    subnet.allowEditingOfContents()
+    display_node = subnet.displayNode()
+
+    shopnet = subnet.createNode('shopnet','shopnet')
+    plastic = shopnet.createNode('v_plastic')
+    plastic.parmTuple('diff').set((1,0,0))
+    volumecloud = shopnet.createNode('v_volumecloud')
+    volumecloud.parmTuple('diff').set((0,0,1))
+    shopnet.layoutChildren()
+
+    group_poly = subnet.createNode('groupcreate','group_poly')
+    group_poly.parm('groupname').set('group_poly')
+    group_poly.parm('geotype').set('poly')
+    group_poly.setInput(0,display_node)
+    
+    group_volume = subnet.createNode('groupcreate','group_volume')
+    group_volume.parm('groupname').set('group_volume')
+    group_volume.parm('geotype').set('volume')
+    group_volume.setInput(0,group_poly)
+    
+    material = subnet.createNode('material','material')
+    material.parm('num_materials').set(2)
+    material.parm('group1').set(group_poly.name())
+    material.parm('shop_materialpath1').set(material.relativePathTo(plastic))
+    material.parm('group2').set(group_volume.name())
+    material.parm('shop_materialpath2').set(material.relativePathTo(volumecloud))
+    material.setInput(0,group_volume)
+    
+    out = subnet.createNode('null','OUT')
+    out.setInput(0,material)
+    out.setDisplayFlag(True)
+    out.setRenderFlag(True)
+
+    subnet.layoutChildren()
+    definition = subnet.type().definition()
+    definition.updateFromNode(subnet)
+    subnet.matchCurrentDefinition()
     
 def create_cam():
     obj = hou.node('/obj')
@@ -73,6 +109,7 @@ def run():
     hou.hipFile.clear(suppress_save_prompt=False)
     box_subnet = create_box_subnet()
     demo_box = create_hda(box_subnet,'demo_box')
+    add_shading_component(demo_box)
     create_cam()
     hou.node('/obj').layoutChildren()
     
