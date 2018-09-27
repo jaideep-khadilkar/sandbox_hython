@@ -10,9 +10,9 @@ import textwrap
 
 class DemoBox(object):
     def __init__(self):
-        box_subnet = self.create_box_subnet()
-        demo_box = self.create_hda(box_subnet, hda_name='demo_box')
-        self.add_shading_component(demo_box)
+        box_subnet = DemoBox.create_box_subnet()
+        demo_box = DemoBox.create_hda(box_subnet, hda_name='demo_box')
+        DemoBox.add_shading_component(demo_box)
 
     @staticmethod
     def create_box_subnet():
@@ -48,10 +48,11 @@ class DemoBox(object):
         note = box_geo.createStickyNote('test_note')
         note.setText('This is a test note')
 
-        box_subnet = box_geo.collapseIntoSubnet((box1, box2, copy, python, xform, note)
-                                                , subnet_name='box_subnet')
-        box_subnet.layoutChildren()
-        #         box_subnet.node().setPosition(box1.position()+hou.Vector2((5,-2)))
+        box_geo.layoutChildren()
+        note.setPosition(xform.position() + hou.Vector2((2, 0)))
+
+        children = (box1, box2, copy, python, xform, note)
+        box_subnet = box_geo.collapseIntoSubnet(children, subnet_name='box_subnet')
         return box_subnet
 
     @staticmethod
@@ -121,7 +122,7 @@ class DemoBox(object):
 
 def create_cam():
     obj = hou.node('/obj')
-    cam = obj.createNode('cam', 'camera')
+    cam = obj.createNode('cam', 'cam1')
     cur_desktop = hou.ui.curDesktop()
     scene_viewer = cur_desktop.paneTabOfType(hou.paneTabType.SceneViewer)
     persp = scene_viewer.findViewport('persp1')
