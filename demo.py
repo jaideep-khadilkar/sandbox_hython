@@ -4,9 +4,9 @@ Created on 24-Aug-2018
 @author: Jaideep Khadilkar
 """
 import sys
-import time
-sys.path.append('/opt/houdini/houdini/python2.7libs')
 import hou
+import time
+import textwrap
 
 
 class DemoBox(object):
@@ -32,13 +32,13 @@ class DemoBox(object):
         copy.setInput(1, box1)
 
         python_code = """
-node = hou.pwd()
-geo = node.geometry()
-vol = geo.createVolume(100,100,100,geo.boundingBox())
-vol.setAllVoxels([10]*1000000)
-        """
+                      node = hou.pwd()
+                      geo = node.geometry()
+                      vol = geo.createVolume(100,100,100,geo.boundingBox())
+                      vol.setAllVoxels([10]*1000000)
+                      """
         python = box_geo.createNode('python', 'python')
-        python.parm('python').set(python_code)
+        python.parm('python').set(textwrap.dedent(python_code))
         python.setInput(0, copy)
 
         xform = box_geo.createNode('xform', 'xform')
@@ -46,9 +46,13 @@ vol.setAllVoxels([10]*1000000)
         xform.setDisplayFlag(True)
         xform.setRenderFlag(True)
 
-        box_subnet = box_geo.collapseIntoSubnet((box1, box2, copy, python, xform)
+        note = box_geo.createStickyNote('test_note')
+        note.setText('This is a test note')
+
+        box_subnet = box_geo.collapseIntoSubnet((box1, box2, copy, python, xform, note)
                                                 , subnet_name='box_subnet')
         box_subnet.layoutChildren()
+        #         box_subnet.node().setPosition(box1.position()+hou.Vector2((5,-2)))
         return box_subnet
 
     @staticmethod
@@ -65,12 +69,13 @@ vol.setAllVoxels([10]*1000000)
 
         hda_instance.allowEditingOfContents()
         source_tuple.set(target_tuple)
+        definition.updateFromNode(hda_instance)
+
         keyframe = hou.Keyframe()
         keyframe.setExpression('$FF', hou.exprLanguage.Hscript)
         target_tuple[0].setKeyframe(keyframe)
         target_tuple[1].setKeyframe(keyframe)
         target_tuple[2].setKeyframe(keyframe)
-        definition.updateFromNode(hda_instance)
         hda_instance.matchCurrentDefinition()
         return hda_instance
 
@@ -96,7 +101,7 @@ vol.setAllVoxels([10]*1000000)
         group_volume.parm('geotype').set('volume')
         group_volume.setInput(0, group_poly)
 
-        material = hda_instance.createNode('material','material')
+        material = hda_instance.createNode('material', 'material')
         material.parm('num_materials').set(2)
         material.parm('group1').set(group_poly.name())
         material.parm('shop_materialpath1').set(material.relativePathTo(plastic))
