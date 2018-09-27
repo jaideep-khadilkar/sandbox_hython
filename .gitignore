@@ -28,4 +28,6 @@
 *.out
 *.app
 
+# PyCharm Files
 *.xml
+*.iml

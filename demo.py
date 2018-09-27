@@ -3,7 +3,6 @@ Created on 24-Aug-2018
 
 @author: Jaideep Khadilkar
 """
-import sys
 import hou
 import time
 import textwrap
