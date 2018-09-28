@@ -30,11 +30,16 @@ class DemoBox(object):
         copy.setInput(0, box2)
         copy.setInput(1, box1)
 
+        hou.appendSessionModuleSource('volume_size = 100')
+        hou.appendSessionModuleSource('volume_amp = 10')
+
         python_code = """
                       node = hou.pwd()
                       geo = node.geometry()
-                      vol = geo.createVolume(100,100,100,geo.boundingBox())
-                      vol.setAllVoxels([10]*1000000)
+                      size = hou.session.volume_size
+                      vol = geo.createVolume(size,size,size,geo.boundingBox())
+                      num_voxels = size*size*size
+                      vol.setAllVoxels([hou.session.volume_amp]*num_voxels)
                       """
         python = box_geo.createNode('python', 'python')
         python.parm('python').set(textwrap.dedent(python_code))
