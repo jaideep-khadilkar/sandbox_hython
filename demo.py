@@ -82,6 +82,7 @@ class DemoBox(object):
     @staticmethod
     def add_shading_component(hda_instance):
         hda_instance.allowEditingOfContents()
+        original_nodes = hda_instance.children()
         display_node = hda_instance.displayNode()
 
         shopnet = hda_instance.createNode('shopnet', 'shopnet')
@@ -115,6 +116,17 @@ class DemoBox(object):
         out.setRenderFlag(True)
 
         hda_instance.layoutChildren()
+
+        def create_netbox(name, nodes):
+            netbox = hda_instance.createNetworkBox()
+            netbox.setComment(name)
+            for node in nodes:
+                netbox.addNode(node)
+            netbox.fitAroundContents()
+
+        create_netbox('box geometry', original_nodes)
+        create_netbox('shading component', (group_poly, group_volume, material, out))
+
         definition = hda_instance.type().definition()
         definition.updateFromNode(hda_instance)
         hda_instance.matchCurrentDefinition()
