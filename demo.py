@@ -36,10 +36,15 @@ class DemoBox(object):
         python_code = """
                       node = hou.pwd()
                       geo = node.geometry()
-                      size = hou.session.volume_size
-                      vol = geo.createVolume(size,size,size,geo.boundingBox())
-                      num_voxels = size*size*size
-                      vol.setAllVoxels([hou.session.volume_amp]*num_voxels)
+                      temp = hou.Geometry()
+                      sops = hou.sopNodeTypeCategory()
+                      box = sops.nodeVerb("box")
+                      box.setParms({'scale':1.2})
+                      box.execute(temp, [])
+                      vdb = sops.nodeVerb("vdbfrompolygons")
+                      vdb.setParms({'builddistance':0,'buildfog':1,'voxelsize':0.02})
+                      vdb.execute(temp, [temp])
+                      geo.merge(temp)
                       """
         python = box_geo.createNode('python', 'python')
         python.parm('python').set(textwrap.dedent(python_code))
