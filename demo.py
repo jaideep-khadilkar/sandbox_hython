@@ -6,6 +6,11 @@ Created on 24-Aug-2018
 import hou
 import time
 import textwrap
+import logging
+
+logging.basicConfig()
+logger = logging.getLogger('Hython_Demo')
+logger.setLevel(logging.INFO)
 
 
 class DemoBox(object):
@@ -13,6 +18,7 @@ class DemoBox(object):
         box_subnet = DemoBox.create_box_subnet()
         demo_box = DemoBox.create_hda(box_subnet, hda_name='demo_box')
         DemoBox.add_shading_component(demo_box)
+        logger.info('Created DemoBox hda')
 
     @staticmethod
     def create_box_subnet():
@@ -109,7 +115,7 @@ class DemoBox(object):
 
         group_volume = hda_instance.createNode('groupcreate', 'group_volume')
         group_volume.parm('groupname').set('group_volume')
-        group_volume.parm('geotype').set('volume')
+        group_volume.parm('geotype').set('vdb')
         group_volume.setInput(0, group_poly)
 
         material = hda_instance.createNode('material', 'material')
@@ -152,13 +158,48 @@ def create_cam():
     persp.saveViewToCamera(cam)
     time.sleep(0.1)
     persp.setCamera(cam)
+    logger.info('Created camera')
+
+
+def create_mantra():
+    out = hou.node('/out')
+    mantra = out.createNode('ifd', 'mantra1')
+    mantra.parm('vm_picture').set('$TEMP/box.jpeg')
+    mantra.parm('execute').pressButton()
+    logger.info('Created mantra node')
+
+
+def create_cop():
+    cop = hou.node('/obj').createNode('cop2net')
+    file_node = cop.createNode('file')
+    file_node.parm('filename1').set('$TEMP/box.jpeg')
+    logger.info('Created copnet')
+
+
+def scene_event_callback(event_type):
+    if event_type == hou.hipFileEventType.AfterClear:
+        message = """
+                  This is a hython demo by Jaideep Khadilkar.
+                  https://github.com/jaideep-khadilkar/sandbox_hython
+                  """
+        response = hou.ui.displayMessage(textwrap.dedent(message), buttons=('OK', 'Source Code'))
+        if response:
+            import webbrowser
+            webbrowser.open('https://github.com/jaideep-khadilkar/sandbox_hython')
 
 
 def run():
+    hou.hipFile.addEventCallback(scene_event_callback)
     hou.hipFile.clear(suppress_save_prompt=False)
-    hou.setUpdateMode(hou.updateMode.Manual)
-    DemoBox()
-    create_cam()
-    hou.node('/obj').layoutChildren()
-    hou.setUpdateMode(hou.updateMode.AutoUpdate)
-    hou.playbar.setRealTime(True)
+    with hou.undos.group("Demo"):
+        hou.setUpdateMode(hou.updateMode.Manual)
+        DemoBox()
+        create_cam()
+        hou.setUpdateMode(hou.updateMode.AutoUpdate)
+        hou.playbar.setRealTime(True)
+        hou.setFrame(25)
+        create_mantra()
+        create_cop()
+        hou.node('/obj').layoutChildren()
+    hou.hipFile.removeEventCallback(scene_event_callback)
+    hou.hipFile.save(hou.hscriptExpandString('$TEMP') + '/demo.hip')
