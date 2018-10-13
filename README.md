@@ -8,4 +8,5 @@ Paste following script in a Houdini shelf tool, or run from a python shell.
 ```import sys
 sys.path.append('SANDBOX_HYTHON_ROOT_DIR')
 import demo
-demo.run()```
+demo.run()
+```
